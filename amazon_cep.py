@@ -177,7 +177,7 @@ def run():
         price = product["price"].strip()
 
         if asin in sent_data:
-    old_price = sent_data[asin]
+            old_price = sent_data[asin]
             try:
                old_val = float(old_price.replace("TL", "").replace(".", "").replace(",", ".").strip())
                new_val = float(price.replace("TL", "").replace(".", "").replace(",", ".").strip())    
