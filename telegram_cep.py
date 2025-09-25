@@ -23,8 +23,8 @@ def format_product_message(product):
 
     if old_price and old_price != price:
         fiyat_bilgisi = (
-            f"💰 *Eski fiyat:* *{old_price}*\n"
-            f"🔻 *Yeni fiyat:* *{price}*"
+            f"🔻 *Eski fiyat:* *{old_price}*\n"
+            f"💰 *Yeni fiyat:* *{price}*"
         )
     else:
         fiyat_bilgisi = f"💰 *{price}*"
