@@ -183,6 +183,8 @@ def run():
                new_val = float(price.replace("TL", "").replace(".", "").replace(",", ".").strip())    
                if new_val < old_val:
                    print(f"📉 Fiyat düştü: {product['title']} → {old_price} → {price}")
+                   product["old_price"] = old_price
+                   
                    products_to_send.append(product)
                else:
                    print(f"⏩ Fiyat yükseldi veya aynı: {product['title']} → {old_price} → {price}")
