@@ -21,12 +21,13 @@ def format_product_message(product):
     renkler = ", ".join([c["color"] for c in colors]) if colors else ""
     teknik = "\n".join([f"▫️ {spec}" for spec in specs]) if specs else ""
 
-    fiyat_bilgisi = (
-        f"💰 *Eski fiyat:* {old_price}\n"
-        f"🔻 *Yeni fiyat:* {price}"
-        if old_price and old_price != price
-        else f"💰 *{price}*"
-    )
+    if old_price and old_price != price:
+        fiyat_bilgisi = (
+            f"💰 *Eski fiyat:* *{old_price}*\n"
+            f"🔻 *Yeni fiyat:* *{price}*"
+        )
+    else:
+        fiyat_bilgisi = f"💰 *{price}*"
 
     return (
         f"*{title}*\n"
