@@ -32,13 +32,13 @@ jobs:
         run: echo "${{ secrets.COOKIE_B64 }}" | base64 -d > cookie_cep.json
 
       - name: Scraper B'yi çalıştır
-        run: python amazon_cep_b.py
+        run: python amazon_cep.py
 
       - name: Değişiklikleri commit et ve pushla
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
-          git add send_products_b.txt
+          git add send_products.txt
           git commit -m "Scraper B → Fiyat güncellemesi" || echo "⏩ Değişiklik yok"
           git pull origin master --rebase || echo "⏩ Pull başarısız, devam ediliyor"
           git push
