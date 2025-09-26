@@ -104,14 +104,9 @@ def load_sent_data():
                     data[asin.strip()] = price.strip()
     return data
 
-def save_sent_data(products_to_send):
-    existing = load_sent_data()
-    for product in products_to_send:
-        asin = product['asin'].strip()
-        price = product['price'].strip()
-        existing[asin] = price
+def save_sent_data(updated_data):
     with open(SENT_FILE, "w", encoding="utf-8") as f:
-        for asin, price in existing.items():
+        for asin, price in updated_data.items():
             f.write(f"{asin} | {price}\n")
 
 def run():
@@ -200,7 +195,7 @@ def run():
     if products_to_send:
         for p in products_to_send:
             send_message(p)
-        save_sent_data(products_to_send)
+        save_sent_data(sent_data)
         print(f"📁 Dosya güncellendi: {len(products_to_send)} ürün eklendi/güncellendi.")
     else:
         print("⚠️ Yeni veya indirimli ürün bulunamadı.")
