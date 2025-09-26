@@ -2,7 +2,7 @@ name: Amazon Scraper B
 
 on:
   schedule:
-    - cron: '*/6 * * * *'  # Her 6 dakikada bir
+    - cron: '*/5 * * * *'  # Her 5 dakikada bir
   workflow_dispatch:
 
 permissions:
