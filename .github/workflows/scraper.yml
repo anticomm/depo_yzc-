@@ -1,17 +1,20 @@
-name: Amazon Elektronik Scraper
+name: Amazon Scraper A
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # Her 5 dakikada bir çalışır
+    - cron: '*/4 * * * *'  # Her 4 dakikada bir
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: amazon-scraper-group
+  cancel-in-progress: true
+
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
-
     env:
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       CHAT_ID: ${{ secrets.CHAT_ID }}
@@ -30,8 +33,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Cookie dosyasını oluştur
-        run: |
-          echo "${{ secrets.COOKIE_B64 }}" | base64 -d > cookie_cep.json
+        run: echo "${{ secrets.COOKIE_B64 }}" | base64 -d > cookie_cep.json
 
       - name: Scraper'ı çalıştır
         run: python amazon_cep.py
@@ -41,5 +43,5 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
           git add send_products.txt
-          git commit -m "Fiyat güncellemesi: send_products.txt" || echo "⏩ Değişiklik yok, commit atlanıyor"
+          git commit -m "Scraper A → Fiyat güncellemesi" || echo "⏩ Değişiklik yok"
           git push
