@@ -31,7 +31,7 @@ jobs:
       - name: Cookie dosyasını oluştur
         run: echo "${{ secrets.COOKIE_B64 }}" | base64 -d > cookie_cep.json
 
-      - name: Scraper B'yi çalıştır
+      - name: Scraper'ı çalıştır
         run: python amazon_cep.py
 
       - name: Değişiklikleri commit et ve pushla
@@ -50,5 +50,5 @@ jobs:
         run: |
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            https://api.github.com/repos/anticomm/depo_yzc-/actions/workflows/scraperc.yml/dispatches \
+            https://api.github.com/repos/anticomm/depo_yzc-/actions/workflows/Amazon%20Scraper%20C/dispatches \
             -d '{"ref":"master"}'
