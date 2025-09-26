@@ -50,5 +50,6 @@ jobs:
         run: |
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            https://api.github.com/repos/anticomm/depo_yzc-/actions/workflows/scraperb.yml/dispatches \
+            https://api.github.com/repos/anticomm/depo_yzc-/actions/workflows/Amazon%20Scraper%20B/dispatches \
             -d '{"ref":"master"}'
+
