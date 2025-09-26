@@ -179,20 +179,23 @@ def run():
         if asin in sent_data:
             old_price = sent_data[asin]
             try:
-               old_val = float(old_price.replace("TL", "").replace(".", "").replace(",", ".").strip())
-               new_val = float(price.replace("TL", "").replace(".", "").replace(",", ".").strip())    
-               if new_val < old_val:
-                   print(f"📉 Fiyat düştü: {product['title']} → {old_price} → {price}")
-                   product["old_price"] = old_price
-                   
-                   products_to_send.append(product)
-               else:
-                   print(f"⏩ Fiyat yükseldi veya aynı: {product['title']} → {old_price} → {price}")
+                old_val = float(old_price.replace("TL", "").replace(".", "").replace(",", ".").strip())
+                new_val = float(price.replace("TL", "").replace(".", "").replace(",", ".").strip())
+                if new_val < old_val:
+                    print(f"📉 Fiyat düştü: {product['title']} → {old_price} → {price}")
+                    product["old_price"] = old_price
+                    products_to_send.append(product)
+                else:
+                    print(f"⏩ Fiyat yükseldi veya aynı: {product['title']} → {old_price} → {price}")
+                # Her durumda son fiyatı güncelle
+                sent_data[asin] = price
             except:
                 print(f"⚠️ Fiyat karşılaştırılamadı: {product['title']} → {old_price} → {price}")
+                sent_data[asin] = price
         else:
             print(f"🆕 Yeni ürün: {product['title']}")
             products_to_send.append(product)
+            sent_data[asin] = price
 
     if products_to_send:
         for p in products_to_send:
