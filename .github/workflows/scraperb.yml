@@ -5,7 +5,7 @@ on:
 
 permissions:
   contents: write
-
+  actions: write
 jobs:
   run-scraper:
     runs-on: ubuntu-latest
