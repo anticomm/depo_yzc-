@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from telegram_cep import send_message
 
-URL = "https://www.amazon.com.tr/s?k=yaz%C4%B1c%C4%B1&i=computers&srs=44219324031&bbn=44219324031&rh=n%3A12466439031%2Cn%3A44219324031%2Cn%3A12601910031%2Cn%3A12601988031&dc&ds=v1%3AbEaVVVYnVMWmBpUTnz3DQZmrZBxs9cPMTWTklvSADLA&__mk_tr_TR=%C3%85M%C3%85%C5%BD%C3%95%C3%91"
+URL = "https://www.amazon.com.tr/s?k=yaz%C4%B1c%C4%B1&i=computers&srs=44219324031&bbn=44219324031&rh=n%3A12601988031%2Cp_98%3A21345978031&dc&ds=v1%3AgbsXClSbDd7ewWkewhpYZTaUKau%2BXM53aeVKwavWN8w&__mk_tr_TR=%C3%85M%C3%85%C5%BD%C3%95%C3%91"
 COOKIE_FILE = "cookie_cep.json"
 SENT_FILE = "send_products.txt"
 
