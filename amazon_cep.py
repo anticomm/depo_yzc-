@@ -1,3 +1,5 @@
+import time, os, requests
+start = time.time()
 import os
 import json
 import time
@@ -11,8 +13,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from telegram_cep import send_message
-
-URL = "https://www.amazon.com.tr/s?k=yaz%C4%B1c%C4%B1&i=computers&srs=44219324031&bbn=44219324031&rh=n%3A12601988031%2Cp_98%3A21345978031&dc&ds=v1%3AgbsXClSbDd7ewWkewhpYZTaUKau%2BXM53aeVKwavWN8w&__mk_tr_TR=%C3%85M%C3%85%C5%BD%C3%95%C3%91"
+from capture import run_capture
+URL = "https://www.amazon.com.tr/s?k=yaz%C4%B1c%C4%B1&i=computers&srs=44219324031&bbn=44219324031&rh=n%3A12466439031%2Cn%3A44219324031%2Cn%3A12601910031%2Cp_98%3A21345978031&dc&ds=v1%3AJKNxsuucIGvQG%2Fs2LC6MQWakekVSIDdCGwz8Xu4W%2BFk&__mk_tr_TR=%C3%85M%C3%85%C5%BD%C3%95%C3%91"
 COOKIE_FILE = "cookie_cep.json"
 SENT_FILE = "send_products.txt"
 
@@ -32,6 +34,7 @@ def decode_cookie_from_env():
         return False
 
 def load_cookies(driver):
+    check_timeout()
     if not os.path.exists(COOKIE_FILE):
         print("❌ Cookie dosyası eksik.")
         return
@@ -47,8 +50,24 @@ def load_cookies(driver):
             })
         except Exception as e:
             print(f"⚠️ Cookie eklenemedi: {cookie.get('name')} → {e}")
-
+def check_timeout():
+    if time.time() - start > 180:
+        print("⏱️ Süre doldu, zincir devam ediyor.")
+        try:
+            requests.post(
+                "https://api.github.com/repos/anticomm/depo_dzst-/actions/workflows/scraperb.yml/dispatches",
+                headers={
+                    "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                    "Accept": "application/vnd.github.v3+json"
+                },
+                json={"ref": "master"}
+            )
+            print("📡 Scraper B tetiklendi.")
+        except Exception as e:
+            print(f"❌ Scraper B tetiklenemedi: {e}")
+        raise TimeoutError("Zincir süresi doldu")
 def get_driver():
+    check_timeout()
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
@@ -56,7 +75,10 @@ def get_driver():
     options.add_argument("--window-size=1920,1080")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/115 Safari/537.36")
     return webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
+def scroll_page(driver, pause=1.5, steps=5):
+    for _ in range(steps):
+        driver.execute_script("window.scrollBy(0, 1000);")
+        time.sleep(pause)
 def get_used_price_from_item(item):
     try:
         container = item.find_element(
@@ -81,6 +103,7 @@ def get_used_price_from_detail(driver):
         return None
 
 def get_final_price(driver, link):
+    check_timeout()
     try:
         driver.execute_script("window.open('');")
         driver.switch_to.window(driver.window_handles[1])
@@ -100,6 +123,7 @@ def get_final_price(driver, link):
         return None
 
 def load_sent_data():
+    check_timeout()
     data = {}
     if os.path.exists(SENT_FILE):
         with open(SENT_FILE, "r", encoding="utf-8") as f:
@@ -116,24 +140,27 @@ def save_sent_data(updated_data):
             f.write(f"{asin} | {price}\n")
 
 def run():
+    check_timeout()
     if not decode_cookie_from_env():
         return
 
     driver = get_driver()
+    check_timeout()
+
     driver.get(URL)
     time.sleep(2)
     load_cookies(driver)
+    check_timeout()
     driver.get(URL)
-
     try:
-        WebDriverWait(driver, 30).until(
+        WebDriverWait(driver, 35).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "div[data-component-type='s-search-result']"))
         )
     except:
         print("⚠️ Sayfa yüklenemedi.")
         driver.quit()
         return
-
+    scroll_page(driver)
     driver.execute_script("""
       document.querySelectorAll("h5.a-carousel-heading").forEach(h => {
         let box = h.closest("div");
@@ -145,6 +172,7 @@ def run():
     print(f"🔍 {len(items)} ürün bulundu.")
     products = []
     for item in items:
+        check_timeout()
         try:
             if item.find_elements(By.XPATH, ".//span[contains(text(), 'Sponsorlu')]"):
                 continue
@@ -212,10 +240,14 @@ def run():
     if products_to_send:
         for p in products_to_send:
             send_message(p)
+            run_capture(p)
         save_sent_data(sent_data)
         print(f"📁 Dosya güncellendi: {len(products_to_send)} ürün eklendi/güncellendi.")
     else:
         print("⚠️ Yeni veya indirimli ürün bulunamadı.")
 
 if __name__ == "__main__":
-    run()
+    try:
+        run()
+    except TimeoutError as e:
+        print(f"⏹️ Zincir durduruldu: {e}")
