@@ -1,5 +1,5 @@
 
-name: Amazon Scraper C
+name: Amazon Scraper A
 
 on:
   workflow_dispatch:
