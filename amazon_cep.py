@@ -5,6 +5,7 @@ import json
 import time
 import base64
 import re
+import site_generator as site
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -13,11 +14,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from telegram_cep import send_message
-from capture import run_capture
-URL = "https://www.amazon.com.tr/s?k=yaz%C4%B1c%C4%B1&i=computers&srs=44219324031&bbn=44219324031&rh=n%3A12466439031%2Cn%3A44219324031%2Cn%3A12601910031%2Cp_98%3A21345978031&dc&ds=v1%3AJKNxsuucIGvQG%2Fs2LC6MQWakekVSIDdCGwz8Xu4W%2BFk&__mk_tr_TR=%C3%85M%C3%85%C5%BD%C3%95%C3%91"
+from site_generator import generate_site, load_template
+URL = "https://www.amazon.com.tr/s?i=kitchen&rh=n%3A12466781031%2Cn%3A13511256031%2Cn%3A13511289031%2Cp_98%3A21345978031%2Cp_6%3AA1UNQM1SR2CHM&s=popularity-rank&dc&fs=true"
 COOKIE_FILE = "cookie_cep.json"
 SENT_FILE = "send_products.txt"
-
+TEMPLATE = load_template()
 def decode_cookie_from_env():
     cookie_b64 = os.getenv("COOKIE_B64")
     if not cookie_b64:
@@ -81,26 +82,12 @@ def scroll_page(driver, pause=1.5, steps=5):
     for _ in range(steps):
         driver.execute_script("window.scrollBy(0, 1000);")
         time.sleep(pause)
-def get_used_price_from_item(item):
-    try:
-        container = item.find_element(
-            By.XPATH,
-            ".//span[contains(text(), 'Diğer satın alma seçenekleri')]/following::span[contains(text(), 'TL')][1]"
-        )
-        price = container.text.strip()
-        return price
-    except:
-        return None
 
-def get_used_price_from_detail(driver):
+def get_regular_price_from_item(item):
     try:
-        container = driver.find_element(
-            By.XPATH,
-            "//div[contains(@class, 'a-column') and .//span[contains(text(), 'İkinci El Ürün Satın Al:')]]"
-        )
-        price_element = container.find_element(By.CLASS_NAME, "offer-price")
-        price = price_element.text.strip()
-        return price
+        whole = item.find_element(By.CSS_SELECTOR, "span.a-price-whole").text.strip()
+        fraction = item.find_element(By.CSS_SELECTOR, "span.a-price-fraction").text.strip()
+        return f"{whole},{fraction} TL"
     except:
         return None
 
@@ -145,7 +132,7 @@ def run():
     check_timeout()
     if not decode_cookie_from_env():
         return
-
+    all_products_to_process = []
     driver = get_driver()
     check_timeout()
 
@@ -187,10 +174,7 @@ def run():
             link = item.find_element(By.CSS_SELECTOR, "a.a-link-normal").get_attribute("href")
             image = item.find_element(By.CSS_SELECTOR, "img.s-image").get_attribute("src")
 
-            price = get_used_price_from_item(item)
-            if not price:
-                price = get_final_price(driver, link)
-
+            price = get_regular_price_from_item(item)
             if not price:
                 continue
 
@@ -215,6 +199,7 @@ def run():
     for product in products:
         asin = product["asin"]
         price = product["price"].strip()
+        all_products_to_process.append(product)
 
         if asin in sent_data:
             old_price = sent_data[asin]
@@ -227,28 +212,35 @@ def run():
                 continue
 
             if new_val < old_val:
-                print(f"📉 Fiyat düştü: {product['title']} → {old_price} → {price}")
-                product["old_price"] = old_price
-                products_to_send.append(product)
+                diff = (old_val - new_val) / old_val
+                if diff >= 0.19:
+                    print(f"📉 %19+ düşüş: {product['title']} → {old_price} → {price}")
+                    product["old_price"] = old_price
+                    products_to_send.append(product)
             else:
                 print(f"⏩ Fiyat yükseldi veya aynı: {product['title']} → {old_price} → {price}")
             sent_data[asin] = price
 
         else:
             print(f"🆕 Yeni ürün: {product['title']}")
-            products_to_send.append(product)
             sent_data[asin] = price
 
-    if products_to_send:
-        for p in products_to_send:
-            send_message(p)
-            run_capture(p)
+    if all_products_to_process:
+        site.generate_site(all_products_to_process, TEMPLATE, products_to_send)
+        print(f"📁 HTML üretildi: {len(all_products_to_process)} ürün işlendi.")
+    
+        if products_to_send:
+            print(f"📲 Mesaj gönderildi: {len(products_to_send)} ürün bildirildi.")
+        else:
+            print("⚠️ Bildirilecek indirimli ürün yok.")
+
         save_sent_data(sent_data)
-        print(f"📁 Dosya güncellendi: {len(products_to_send)} ürün eklendi/güncellendi.")
     else:
-        print("⚠️ Yeni veya indirimli ürün bulunamadı.")
+        print("⚠️ Yeni veya işlenecek ürün bulunamadı.")
+    print("🚀 Zincir başlatıldı")
 
 if __name__ == "__main__":
+    print("🚀 Zincir başlatıldı")
     try:
         run()
     except TimeoutError as e:
