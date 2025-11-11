@@ -1,12 +1,23 @@
 import os
 import requests
 import json
+import re
+
+def extract_clean_price(text):
+    if not text:
+        return ""
+    match = re.search(r"(\d{1,3}(?:\.\d{3})*(?:,\d{2})?)\s*TL", text)
+    return match.group(1) + " TL" if match else ""
 
 def format_product_message(product):
     title = product.get("title", "🛍️ Ürün adı bulunamadı")
-    price = product.get("price", "Fiyat alınamadı")
-    old_price = product.get("old_price", "")  # 👈 Yeni satır
-    link = product.get("link", "#")
+    price = extract_clean_price(product.get("price", ""))
+    old_price = extract_clean_price(product.get("old_price", ""))
+    asin = product.get("asin")
+    if asin:
+        link = f"https://indirimsinyali.com/Elektronik/{asin}.html"
+    else:
+        link = product.get("link", "#")
     discount = product.get("discount", "")
     rating = product.get("rating", "")
     colors = product.get("colors", [])
@@ -38,6 +49,7 @@ def format_product_message(product):
         f"{fiyat_bilgisi}\n"
     )
 
+
 def send_message(product):
     token = os.getenv("BOT_TOKEN")
     chat_id = os.getenv("CHAT_ID")
@@ -50,8 +62,9 @@ def send_message(product):
     message = format_product_message(product)
     image_url = product.get("image")
     asin = product.get("asin")
-    link = f"https://www.amazon.com.tr/dp/{asin}" if asin else product.get("link", "#")
-
+    real_link = f"https://indirimsinyali.com/Elektronik/{asin}.html" if asin else product.get("link", "#")
+    link = real_link
+    
     try:
         reply_markup = json.dumps({
             "inline_keyboard": [[
