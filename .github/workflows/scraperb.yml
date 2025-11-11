@@ -87,4 +87,4 @@ jobs:
           curl -X POST \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             https://api.github.com/repos/anticomm/depo_yzc-/actions/workflows/scraperc.yml/dispatches \
-            -d '{"ref":"main"}' || echo "⚠️ Scraper C tetiklenemedi ama zincir devam ediyor"
+            -d '{"ref":"master"}' || echo "⚠️ Scraper C tetiklenemedi ama zincir devam ediyor"
