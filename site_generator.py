@@ -61,12 +61,19 @@ def process_product(product, template, notify=False):
 
     filename = f"{slug}.html"
     path = os.path.join(HTML_DIR, filename)
+
+    # ✅ Eğer dosya zaten varsa ve içerik aynıysa → yazma
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            existing = f.read()
+        if existing.strip() == html.strip(): 
+            return None
+
+    # ✅ Yeni veya değişmişse → yaz
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)
-
     print(f"✅ Ürün sayfası oluşturuldu: {path}")
 
-    # ✅ Sadece bildirilmesi gereken ürünler için mesaj gönder
     if notify:
         threading.Thread(target=send_message, args=(product,), daemon=True).start()
 
@@ -122,7 +129,15 @@ def generate_site(products, template, products_to_notify):
             notify = product in products_to_notify
             futures.append(executor.submit(process_product, product, template, notify))
         slugs = [f.result() for f in futures if f.result()]
+        total = len(products)
+        updated = len(slugs)
+        skipped = total - updated
 
+        print(f"📦 Toplam ürün: {total}")
+        if updated > 0:
+            print(f"✅ {updated} ürün güncellendi veya eklendi.")
+        if skipped > 0:
+            print(f"⏩ {skipped} ürün değişmedi, HTML yazılmadı.")
     update_category_page()
 
     token = os.getenv("GH_TOKEN")
